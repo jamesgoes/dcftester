@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA DCF Model</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .results {
+            grid-column: span 2;
+        }
+        @media (max-width: 768px) {
+            .results {
+                grid-column: span 1;
+            }
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+        .metric-label {
+            font-weight: 600;
+            color: #555;
+        }
+        .metric-value {
+            color: #333;
+            font-weight: 700;
+        }
+        .price-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+        .projections {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+        .small-text {
+            font-size: 0.85em;
+            color: #777;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 NVIDIA DCF Valuation Model</h1>
+
+        <form method="POST">
+            <div class="content">
+                <div class="panel">
+                    <h2>Revenue Assumptions</h2>
+                    <div class="form-group">
+                        <label for="revenue">Current Revenue ($M)</label>
+                        <input type="number" id="revenue" name="revenue" value="{{ defaults.revenue }}" step="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="revenue_growth">Revenue Growth Rate</label>
+                        <input type="number" id="revenue_growth" name="revenue_growth" value="{{ defaults.revenue_growth }}" step="0.01">
+                        <div class="small-text">Decimal format (0.25 = 25%)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="operating_margin">Operating Margin</label>
+                        <input type="number" id="operating_margin" name="operating_margin" value="{{ defaults.operating_margin }}" step="0.01">
+                        <div class="small-text">Decimal format (0.35 = 35%)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tax_rate">Tax Rate</label>
+                        <input type="number" id="tax_rate" name="tax_rate" value="{{ defaults.tax_rate }}" step="0.01">
+                        <div class="small-text">Decimal format (0.15 = 15%)</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2>Financial Assumptions</h2>
+                    <div class="form-group">
+                        <label for="capex_pct">CapEx (% of Revenue)</label>
+                        <input type="number" id="capex_pct" name="capex_pct" value="{{ defaults.capex_pct }}" step="0.01">
+                        <div class="small-text">Decimal format (0.05 = 5%)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nwc_pct">NWC (% of Revenue)</label>
+                        <input type="number" id="nwc_pct" name="nwc_pct" value="{{ defaults.nwc_pct }}" step="0.01">
+                        <div class="small-text">Decimal format (0.10 = 10%)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="wacc">WACC (Discount Rate)</label>
+                        <input type="number" id="wacc" name="wacc" value="{{ defaults.wacc }}" step="0.01">
+                        <div class="small-text">Decimal format (0.10 = 10%)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="terminal_growth">Terminal Growth Rate</label>
+                        <input type="number" id="terminal_growth" name="terminal_growth" value="{{ defaults.terminal_growth }}" step="0.01">
+                        <div class="small-text">Decimal format (0.03 = 3%)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="shares">Shares Outstanding (M)</label>
+                        <input type="number" id="shares" name="shares" value="{{ defaults.shares }}" step="10">
+                    </div>
+                </div>
+
+                {% if results %}
+                <div class="panel results">
+                    <h2>Valuation Results</h2>
+
+                    <div class="price-highlight">
+                        <div style="font-size: 0.9em; margin-bottom: 5px;">Fair Value Per Share</div>
+                        <div style="font-size: 2em; font-weight: 700;">${{ "%.2f"|format(results.price_per_share) }}</div>
+                    </div>
+
+                    <div class="metric">
+                        <span class="metric-label">Enterprise Value</span>
+                        <span class="metric-value">${{ "%.0f"|format(results.enterprise_value) }}M</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">PV of Projected FCF</span>
+                        <span class="metric-value">${{ "%.0f"|format(results.pv_fcf) }}M</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Terminal Value</span>
+                        <span class="metric-value">${{ "%.0f"|format(results.terminal_value) }}M</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">PV of Terminal Value</span>
+                        <span class="metric-value">${{ "%.0f"|format(results.pv_terminal) }}M</span>
+                    </div>
+
+                    <div class="projections">
+                        <h3 style="margin-bottom: 10px; color: #555;">5-Year Projections</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">Year</th>
+                                    <th>Revenue ($M)</th>
+                                    <th>FCF ($M)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proj in results.projections %}
+                                <tr>
+                                    <td style="text-align: left;">Year {{ proj.year }}</td>
+                                    <td>${{ "%.0f"|format(proj.revenue) }}</td>
+                                    <td>${{ "%.0f"|format(proj.fcf) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div style="grid-column: span 2;">
+                    <button type="submit">Calculate Valuation</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
